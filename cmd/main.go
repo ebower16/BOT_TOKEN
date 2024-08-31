@@ -1,20 +1,38 @@
 package main
 
 import (
-	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
+	"botus/pkg/systems"
+	"context"
+	"os"
+	"os/signal"
+
+	"github.com/go-telegram/bot"
+	"github.com/go-telegram/bot/models"
 )
 
-func main() {
-	// Initialize the logger
-	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stdout})
+// Send any text message to the bot after the bot has been started
 
-	// Get the bot token
+func main() {
 	token := systems.BotToken()
-	if token == "" {
-		log.Fatal().Msg("Bot token is empty")
+
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer cancel()
+
+	opts := []bot.Option{
+		bot.WithDefaultHandler(handler),
 	}
 
-	// Log the bot token
-	log.Info().Str("bot token", token).Send()
+	b, err := bot.New(token, opts...)
+	if err != nil {
+		panic(err)
+	}
+
+	b.Start(ctx)
+}
+
+func handler(ctx context.Context, b *bot.Bot, update *models.Update) {
+	b.SendMessage(ctx, &bot.SendMessageParams{
+		ChatID: update.Message.Chat.ID,
+		Text:   update.Message.Text,
+	})
 }

@@ -1,8 +1,9 @@
-package systems_
+package systems
 
 import (
 	"github.com/joho/godotenv"
 	"os"
+	//"os"
 )
 
 func BotToken() string {
@@ -11,6 +12,5 @@ func BotToken() string {
 	if err != nil {
 		panic(err)
 	}
-
 	return os.Getenv("BOT_TOKEN")
 }
