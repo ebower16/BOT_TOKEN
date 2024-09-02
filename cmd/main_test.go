@@ -4,6 +4,26 @@ import (
 	"testing"
 )
 
+func TestGetKeyboard(t *testing.T) {
+	keyboard := getKeyboard()
+
+	if len(keyboard.Keyboard) != 3 {
+		t.Errorf("getKeyboard() returned keyboard with %d rows, expected 3", len(keyboard.Keyboard))
+	}
+
+	if len(keyboard.Keyboard[0]) != 1 {
+		t.Errorf("getKeyboard() returned keyboard with %d buttons in first row, expected 1", len(keyboard.Keyboard[0]))
+	}
+
+	if len(keyboard.Keyboard[1]) != 2 {
+		t.Errorf("getKeyboard() returned keyboard with %d buttons in second row, expected 2", len(keyboard.Keyboard[1]))
+	}
+
+	if len(keyboard.Keyboard[2]) != 2 {
+		t.Errorf("getKeyboard() returned keyboard with %d buttons in third row, expected 2", len(keyboard.Keyboard[2]))
+	}
+}
+
 func TestProcessMessage(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -23,25 +43,5 @@ func TestProcessMessage(t *testing.T) {
 				t.Errorf("processMessage(%s) = %s, expected %s", test.input, result, test.expected)
 			}
 		})
-	}
-}
-
-func TestGetKeyboard(t *testing.T) {
-	keyboard := getKeyboard()
-
-	if len(keyboard.Keyboard) != 3 {
-		t.Errorf("getKeyboard() returned keyboard with %d rows, expected 3", len(keyboard.Keyboard))
-	}
-
-	if len(keyboard.Keyboard[0]) != 1 {
-		t.Errorf("getKeyboard() returned keyboard with %d buttons in first row, expected 1", len(keyboard.Keyboard[0]))
-	}
-
-	if len(keyboard.Keyboard[1]) != 2 {
-		t.Errorf("getKeyboard() returned keyboard with %d buttons in second row, expected 2", len(keyboard.Keyboard[1]))
-	}
-
-	if len(keyboard.Keyboard[2]) != 2 {
-		t.Errorf("getKeyboard() returned keyboard with %d buttons in third row, expected 2", len(keyboard.Keyboard[2]))
 	}
 }
