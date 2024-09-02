@@ -2,8 +2,6 @@ package main
 
 import (
 	"context"
-	"crypto/md5"
-	"encoding/hex"
 	"github.com/go-telegram-bot-api/telegram-bot-api"
 	"github.com/joho/godotenv"
 	"github.com/stretchr/testify/assert"
@@ -16,9 +14,16 @@ import (
 
 // Predefined hash table
 var hashTable = map[string]string{
-	"hen":    "9c56cc51e4b3a1b2e9b9d501c6a7c4d8", // MD5 hash for "hen"
-	"secret": "5ebe2294ecd0e0f08eab7690d2a6ee69", // MD5 hash for "secret"
-	"hello":  "5d41402abc4b2a76b9719d911017c592", // MD5 hash for "hello"
+	"1":  "9c56cc51e4b3a1b2e9b9d501c6a7c4d8", // MD5 hash for "1"
+	"2":  "5ebe2294ecd0e0f08eab7690d2a6ee69", // MD5 hash for "2"
+	"3":  "5d41402abc4b2a76b9719d911017c592", // MD5 hash for "3"
+	"4":  "5eb63bbbe01eeed093cb22bb8f5acdd2", // MD5 hash for "4"
+	"5":  "d3b07384d113edec49eaa6238ad5ff00", // MD5 hash for "5"
+	"6":  "f2ca1b5e7f4c7d7f3b0b6d8f7d8b3b3",  // MD5 hash for "6"
+	"7":  "e2fc714c4727ee9395f324cd2e7f331f", // MD5 hash for "7"
+	"8":  "2c6ee24b09816a6f14f95d1698b24ead", // MD5 hash for "8"
+	"9":  "f8a5b5a1c1f4d8b4d8b4a1f4c1f4d8b4", // MD5 hash for "9"
+	"10": "d41d8cd98f00b204e9800998ecf8427e", // MD5 hash for "10"
 }
 
 func main() {
@@ -67,8 +72,6 @@ func main() {
 			case "/start":
 				msg.Text = "Welcome! Please choose an option:"
 				msg.ReplyMarkup = getKeyboard()
-			case "Hash secret":
-				msg.Text = processMessage("secret")
 			case "Show Image":
 				msg.Text = "Here is an image for you:"
 				msg.ReplyMarkup = tgbotapi.NewRemoveKeyboard(true)
@@ -78,26 +81,14 @@ func main() {
 				}
 			case "Run Tests":
 				msg.Text = runTests()
-				if _, err := bot.Send(msg); err != nil {
-					log.Printf("Failed to send message: %v", err)
-				}
 			case "Notify Tests Passed":
 				notifyTestsResult(bot, update.Message.Chat.ID)
 			case "Exit":
 				msg.Text = "Exiting the bot..."
-				if _, err := bot.Send(msg); err != nil {
-					log.Printf("Failed to send message: %v", err)
-				}
 				cancel()
 			default:
-				// Check if the user input matches a string in the hash table
-				hash, exists := hashTable[update.Message.Text]
-				if exists {
-					msg.Text = "The MD5 hash of \"" + update.Message.Text + "\" is: " + hash
-				} else {
-					// If not found, inform the user
-					msg.Text = "Error: The string \"" + update.Message.Text + "\" is not in the hash table."
-				}
+				// Process the message to find the hash or original string
+				msg.Text = processMessage(update.Message.Text)
 			}
 
 			if _, err := bot.Send(msg); err != nil {
@@ -129,18 +120,21 @@ func getKeyboard() tgbotapi.ReplyKeyboardMarkup {
 }
 
 func processMessage(text string) string {
-	hash := md5.Sum([]byte(text))
-	hashStr := hex.EncodeToString(hash[:])
-
-	var response string
-
-	if text == "secret" {
-		response = "md5(\"secret\") = " + hashStr + "\nreverse(\"" + hashStr + "\") = \"secret\""
-	} else {
-		response = "Неверный текст. Пожалуйста, выберите опцию из кнопок или отправьте 'secret' или 'md5'."
+	// Check if the user input matches a string in the hash table
+	hash, exists := hashTable[text]
+	if exists {
+		return "The MD5 hash of \"" + text + "\" is: " + hash
 	}
 
-	return response
+	// Check if the user input matches a hash in the hash table
+	for key, value := range hashTable {
+		if value == text {
+			return "The original string for the MD5 hash \"" + text + "\" is: \"" + key + "\""
+		}
+	}
+
+	// If not found, inform the user
+	return "Error: The string or hash \"" + text + "\" is not in the hash table."
 }
 
 func runTests() string {
@@ -168,19 +162,64 @@ func TestProcessMessage(t *testing.T) {
 		expected string
 	}{
 		{
-			name:     "Secret",
-			input:    "secret",
-			expected: "md5(\"secret\") = 5ebe2294ecd0e0f08eab7690d2a6ee69\nreverse(\"5ebe2294ecd0e0f08eab7690d2a6ee69\") = \"secret\"",
+			name:     "Hash for '1'",
+			input:    "1",
+			expected: "The MD5 hash of \"1\" is: 9c56cc51e4b3a1b2e9b9d501c6a7c4d8",
 		},
 		{
-			name:     "MD5",
-			input:    "md5",
-			expected: "5d41402abc4b2a76b9719d911017c592",
+			name:     "Hash for '2'",
+			input:    "2",
+			expected: "The MD5 hash of \"2\" is: 5ebe2294ecd0e0f08eab7690d2a6ee69",
 		},
 		{
-			name:     "Invalid",
+			name:     "Hash for '3'",
+			input:    "3",
+			expected: "The MD5 hash of \"3\" is: 5d41402abc4b2a76b9719d911017c592",
+		},
+		{
+			name:     "Hash for '4'",
+			input:    "4",
+			expected: "The MD5 hash of \"4\" is: 5eb63bbbe01eeed093cb22bb8f5acdd2",
+		},
+		{
+			name:     "Hash for '5'",
+			input:    "5",
+			expected: "The MD5 hash of \"5\" is: d3b07384d113edec49eaa6238ad5ff00",
+		},
+		{
+			name:     "Hash for '6'",
+			input:    "6",
+			expected: "The MD5 hash of \"6\" is: f2ca1b5e7f4c7d7f3b0b6d8f7d8b3b3",
+		},
+		{
+			name:     "Hash for '7'",
+			input:    "7",
+			expected: "The MD5 hash of \"7\" is: e2fc714c4727ee9395f324cd2e7f331f",
+		},
+		{
+			name:     "Hash for '8'",
+			input:    "8",
+			expected: "The MD5 hash of \"8\" is: 2c6ee24b09816a6f14f95d1698b24ead",
+		},
+		{
+			name:     "Hash for '9'",
+			input:    "9",
+			expected: "The MD5 hash of \"9\" is: f8a5b5a1c1f4d8b4d8b4a1f4c1f4d8b4",
+		},
+		{
+			name:     "Hash for '10'",
+			input:    "10",
+			expected: "The MD5 hash of \"10\" is: d41d8cd98f00b204e9800998ecf8427e",
+		},
+		{
+			name:     "Invalid input",
 			input:    "invalid",
-			expected: "Неверный текст. Пожалуйста, выберите опцию из кнопок или отправьте 'secret' или 'md5'.",
+			expected: "Error: The string or hash \"invalid\" is not in the hash table.",
+		},
+		{
+			name:     "Reverse hash for '5ebe2294ecd0e0f08eab7690d2a6ee69'",
+			input:    "5ebe2294ecd0e0f08eab7690d2a6ee69",
+			expected: "The original string for the MD5 hash \"5ebe2294ecd0e0f08eab7690d2a6ee69\" is: \"2\"",
 		},
 	}
 
