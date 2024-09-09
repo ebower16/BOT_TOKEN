@@ -4,13 +4,14 @@ import (
 	"log"
 	"os"
 
-	"botus/internal/bot" // Correct import path
-	"github.com/joho/godotenv"
+	"botus/internal/bot"
+	"botus/pkg/config"
 )
 
 func main() {
-	if err := godotenv.Load(); err != nil {
-		log.Fatalf("Error loading .env file: %v", err)
+	// Загружаем конфигурацию
+	if err := config.Load(); err != nil {
+		log.Fatalf("Error loading configuration: %v", err)
 	}
 
 	botToken := os.Getenv("BOT_TOKEN")

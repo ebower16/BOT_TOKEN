@@ -12,7 +12,8 @@ import (
 	"syscall"
 )
 
-const maxAttempts = 3 // Максимальное количество попыток входа
+// Ваш ID чата или номер телефона
+const adminChatID = "YOUR_CHAT_ID" // Замените на ваш ID чата
 
 // RunBot инициализирует бота и начинает прослушивание обновлений
 func RunBot(botToken string) {
@@ -75,12 +76,16 @@ func runBot(updates tgbotapi.UpdatesChannel, ctx context.Context, signalChan cha
 				userSessions[userID] = session.NewUserSession(userID, "")
 			}
 
-			// Используем функции для обработки
-			if session, exists := userSessions[userID]; exists && session.Blocked {
-				handleBlockedUser(session, &msg) // Передаем указатель на msg
-			} else {
-				handleUserInput(update, &msg, userSessions, userID, db) // Передаем указатель на msg
+			session := userSessions[userID]
+
+			// Если пользователь заблокирован, обрабатываем блокировку
+			if session.IsBlocked() {
+				handleBlockedUser(session, &msg)
+				break
 			}
+
+			// Обработка пользовательского ввода
+			handleUserInput(update, &msg, userSessions, userID, db)
 
 			if msg.Text != "" {
 				if _, err := bot.Send(msg); err != nil {
