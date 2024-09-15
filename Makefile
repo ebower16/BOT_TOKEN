@@ -1,7 +1,8 @@
 # Имя исполняемого файла
 BINARY_NAME=botus
 
-GO_FILES=$(shell find ./cmd -name '*.go') $(shell find ./internal -name '*.go') $(shell find ./pkg -name '*.go')
+# Поиск всех файлов Go в проекте
+GO_FILES=$(shell find ./cmd -name '*.go') $(shell find ./internal -name '*.go')
 
 # Цели Makefile
 .PHONY: all

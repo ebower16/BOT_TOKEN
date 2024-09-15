@@ -1,22 +1,34 @@
 package app
 
 import (
-	"botus/internal/service"
 	"fmt"
+	"sync"
+	"time"
+
+	"botus/internal/service"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
 type Bot struct {
-	api         *tgbotapi.BotAPI
-	hashService *service.HashService
+	api             *tgbotapi.BotAPI
+	hashService     *service.HashService
+	maxRequestsHour int
+	requestsCount   int
+	mu              sync.Mutex
+	lastHourStart   time.Time
 }
 
-func NewBot(botToken string, hashService *service.HashService) (*Bot, error) {
+func NewBot(botToken string, hashService *service.HashService, maxRequestsHour int) (*Bot, error) {
 	api, err := tgbotapi.NewBotAPI(botToken)
 	if err != nil {
 		return nil, err
 	}
-	return &Bot{api: api, hashService: hashService}, nil
+	return &Bot{
+		api:             api,
+		hashService:     hashService,
+		maxRequestsHour: maxRequestsHour,
+		lastHourStart:   time.Now(),
+	}, nil
 }
 
 func (b *Bot) Start() {
@@ -30,10 +42,24 @@ func (b *Bot) Start() {
 			continue
 		}
 
+		b.mu.Lock()
+		if time.Since(b.lastHourStart) >= time.Hour {
+			b.requestsCount = 0
+			b.lastHourStart = time.Now()
+		}
+		b.requestsCount++
+		if b.requestsCount > b.maxRequestsHour {
+			b.mu.Unlock()
+			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Превышен лимит запросов в час. Попробуйте позже.")
+			b.api.Send(msg)
+			continue
+		}
+		b.mu.Unlock()
+
 		input := update.Message.Text
 
 		if isEnglish(input) {
-			hash := b.hashService.GenerateMD5(input)
+			hash := b.hashService.AddHash(input)
 			msg := tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("MD5-хеш для '%s': %s", input, hash))
 			b.api.Send(msg)
 		} else if isHexadecimal(input) && len(input) == 32 {

@@ -1,12 +1,18 @@
 package main
 
 import (
+	"database/sql"
 	"log"
 	"os"
 
 	"botus/internal/app"
+	"botus/internal/config"
 	"botus/internal/service"
-	"botus/pkg/config"
+	_ "github.com/lib/pq" // Импортируем драйвер PostgreSQL
+)
+
+const (
+	maxRequestsPerHour = 100
 )
 
 func main() {
@@ -19,10 +25,20 @@ func main() {
 		log.Fatal("BOT_TOKEN не установлен")
 	}
 
-	hashService := service.NewHashService()
-	hashService.AddHash("secret", "5ebe2294ecd0e0f08eab7690d2a6ee69") // Добавляем соответствие "secret" -> MD5-хеш
+	dbConnStr := os.Getenv("DB_CONNECTION_STRING")
+	if dbConnStr == "" {
+		log.Fatal("DB_CONNECTION_STRING не установлен")
+	}
 
-	bot, err := app.NewBot(botToken, hashService)
+	db, err := sql.Open("postgres", dbConnStr)
+	if err != nil {
+		log.Fatalf("Ошибка подключения к базе данных: %v", err)
+	}
+	defer db.Close()
+
+	hashService := service.NewHashService(db)
+
+	bot, err := app.NewBot(botToken, hashService, maxRequestsPerHour)
 	if err != nil {
 		log.Fatalf("Не удалось создать бота: %v", err)
 	}
