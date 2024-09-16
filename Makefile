@@ -1,31 +1,31 @@
-# Имя исполняемого файла
+
 BINARY_NAME=botus
 
-# Поиск всех файлов Go в проекте
+
 GO_FILES=$(shell find ./cmd -name '*.go') $(shell find ./internal -name '*.go')
 
-# Цели Makefile
+
 .PHONY: all
 all: build
 
 .PHONY: build
 build:
-	@echo "Сборка приложения..."
+	@echo 
 	go build -o $(BINARY_NAME) $(GO_FILES)
 
 .PHONY: run
 run: build
-	@echo "Запуск приложения..."
+	@echo 
 	./$(BINARY_NAME)
 
 .PHONY: test
 test:
-	@echo "Запуск тестов..."
+	@echo 
 	go test ./...
 
 .PHONY: clean
 clean:
-	@echo "Очистка..."
+	@echo 
 	rm -f $(BINARY_NAME)
 
 .PHONY: all-run
