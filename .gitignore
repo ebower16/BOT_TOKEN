@@ -1,3 +1,0 @@
-.env
-echo '.idea' >> .gitignore
-.idea

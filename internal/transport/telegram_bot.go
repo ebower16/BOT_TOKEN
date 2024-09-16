@@ -1,4 +1,4 @@
-package app
+package transport
 
 import (
 	"fmt"
@@ -30,7 +30,7 @@ func (b *Bot) Start() {
 
 	for update := range updates {
 		if update.Message == nil || !isEnglish(update.Message.Text) {
-			continue
+			continue // Ignore invalid messages.
 		}
 
 		b.mu.Lock()
@@ -52,7 +52,7 @@ func (b *Bot) Start() {
 			}
 			msg := tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("Value for hash '%s': %s", update.Message.Text, value))
 			b.api.Send(msg)
-		} else { // If it's not a hash - add it as a new one.
+		} else {
 			hash, err := b.hashService.AddHash(update.Message.Text)
 			if err != nil {
 				msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Error: "+err.Error())
@@ -77,7 +77,7 @@ func isEnglish(input string) bool {
 	return true
 }
 
-func isHexadecimal(input string) bool {
+ вfunc isHexadecimal(input string) bool {
 	for _, char := range input {
 		if !((char >= '0' && char <= '9') || (char >= 'a' && char <= 'f') || (char >= 'A' && char <= 'F')) {
 			return false

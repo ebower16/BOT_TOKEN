@@ -1,32 +1,45 @@
+# Определяем переменные
+APP_NAME=botus
+DOCKER_IMAGE=$(APP_NAME):latest
+DOCKER_COMPOSE_FILE=docker-compose.yml
 
-BINARY_NAME=botus
+# Команды
+.PHONY: all build run test docker up down clean
 
-
-GO_FILES=$(shell find ./cmd -name '*.go') $(shell find ./internal -name '*.go')
-
-
-.PHONY: all
 all: build
 
-.PHONY: build
+
 build:
-	@echo 
-	go build -o $(BINARY_NAME) $(GO_FILES)
+	@echo
+	go build -o $(APP_NAME) ./cmd
 
-.PHONY: run
+
 run: build
-	@echo 
-	./$(BINARY_NAME)
+	@echo
+	./$(APP_NAME)
 
-.PHONY: test
+
 test:
-	@echo 
+	@echo
 	go test ./...
 
-.PHONY: clean
-clean:
-	@echo 
-	rm -f $(BINARY_NAME)
 
-.PHONY: all-run
-all-run: build run test
+docker:
+	@echo
+	docker build -t $(DOCKER_IMAGE) .
+
+
+up:
+	@echo
+	docker-compose -f $(DOCKER_COMPOSE_FILE) up --build
+
+
+down:
+	@echo
+	docker-compose -f $(DOCKER_COMPOSE_FILE) down
+
+
+clean:
+	@echo
+	rm -f $(APP_NAME)
+	docker rmi $(DOCKER_IMAGE) || true

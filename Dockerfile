@@ -7,12 +7,13 @@ WORKDIR /app
 
 COPY go.mod go.sum ./
 
+
 RUN go mod download
 
 
 COPY . .
 
-
+# Собираем приложение.
 RUN go build -o botus ./cmd/main.go
 
 

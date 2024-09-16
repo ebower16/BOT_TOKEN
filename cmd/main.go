@@ -3,44 +3,37 @@ package main
 import (
 	"database/sql"
 	"log"
-	"os"
 
 	"botus/internal/app"
 	"botus/internal/config"
 	"botus/internal/service"
-	_ "github.com/lib/pq" // Импортируем драйвер PostgreSQL
+
+	_ "github.com/lib/pq"
 )
 
-const (
-	maxRequestsPerHour = 100
-)
+const maxRequestsPerHour = 100 // Set your limit here
 
 func main() {
-	if err := config.Load(".env"); err != nil {
-		log.Fatalf("Ошибка при загрузке конфигурации: %v", err)
-	}
 
-	botToken := os.Getenv("BOT_TOKEN")
-	if botToken == "" {
-		log.Fatal("BOT_TOKEN не установлен")
-	}
-
-	dbConnStr := os.Getenv("DB_CONNECTION_STRING")
-	if dbConnStr == "" {
-		log.Fatal("DB_CONNECTION_STRING не установлен")
-	}
-
-	db, err := sql.Open("postgres", dbConnStr)
+	configData, err := config.Load()
 	if err != nil {
-		log.Fatalf("Ошибка подключения к базе данных: %v", err)
+		log.Fatalf("Error loading configuration: %v", err)
 	}
+
+	db, err := sql.Open("postgres", configData.DBConnectionString)
+	if err != nil {
+		log.Fatalf("Error connecting to database: %v", err)
+	}
+
 	defer db.Close()
 
-	hashService := service.NewHashService(db)
+	service.InitializeDatabase(db)
 
-	bot, err := app.NewBot(botToken, hashService, maxRequestsPerHour)
+	hashService := service.NewHashService(db, maxRequestsPerHour)
+
+	bot, err := app.NewBot(configData.BotToken, hashService)
 	if err != nil {
-		log.Fatalf("Не удалось создать бота: %v", err)
+		log.Fatalf("Failed to create bot: %v", err)
 	}
 
 	bot.Start()

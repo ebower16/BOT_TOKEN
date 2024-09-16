@@ -1,26 +1,31 @@
 package config
 
 import (
+	"fmt"
 	"log"
 	"os"
-
-	"github.com/joho/godotenv"
 )
 
-func Load(envFilePath string) error {
-	if err := godotenv.Load(envFilePath); err != nil {
-		log.Printf("Ошибка при загрузке .env файла: %v", err)
-		return err
-	}
-	log.Println("Переменные окружения загружены из файла")
+type Config struct {
+	BotToken           string
+	DBConnectionString string
+}
 
-	if os.Getenv("BOT_TOKEN") == "" {
-		log.Fatal("BOT_TOKEN не установлен")
-	}
-
-	if os.Getenv("DB_CONNECTION_STRING") == "" {
-		log.Fatal("DB_CONNECTION_STRING не установлен")
+func Load() (*Config, error) {
+	botToken := os.Getenv("BOT_TOKEN")
+	if botToken == "" {
+		log.Println("BOT_TOKEN not set")
+		return nil, fmt.Errorf("BOT_TOKEN not set")
 	}
 
-	return nil
+	dbConnStr := os.Getenv("DB_CONNECTION_STRING")
+	if dbConnStr == "" {
+		log.Println("DB_CONNECTION_STRING not set")
+		return nil, fmt.Errorf("DB_CONNECTION_STRING not set")
+	}
+
+	return &Config{
+		BotToken:           botToken,
+		DBConnectionString: dbConnStr,
+	}, nil
 }
