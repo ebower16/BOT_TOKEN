@@ -1,38 +1,45 @@
 package service
 
 import (
-	"fmt"
+	"strconv"
 	"testing"
 	"time"
 )
 
-func TestGenerateMD5Performance(t *testing.T) {
-	hashService := NewHashService(nil) // Передайте nil, если база данных не используется в тесте
+func TestAddAndFindHash(t *testing.T) {
+	hashService := NewHashService()
 
-	// Создаем массив строк для тестирования
+	inputText := "test string"
+	hashValue, _ := hashService.AddHash(inputText)
+
+	foundValue, err := hashService.FindValueByHash(hashValue)
+	if err != nil || foundValue != inputText {
+		t.Errorf("Expected '%s', got '%s', error: %v", inputText, foundValue, err)
+	}
+}
+
+func TestGenerateMD5Performance(t *testing.T) {
+	hashService := NewHashService()
+
 	inputs := make([]string, 1000)
 	for i := 0; i < 1000; i++ {
-		inputs[i] = fmt.Sprintf("test string %d", i)
+		inputs[i] = "test string " + strconv.Itoa(i)
 	}
 
-	// Однопоточный тест
-	start := time.Now()
+	startTimeSingleThreaded := time.Now()
 	for _, input := range inputs {
 		hashService.GenerateMD5(input)
 	}
-	oneThreadDuration := time.Since(start)
+	durationSingleThreaded := time.Since(startTimeSingleThreaded)
 
-	// Параллельный тест
-	start = time.Now()
+	startTimeMultiThreaded := time.Now()
 	hashService.GenerateMD5Parallel(inputs)
-	parallelDuration := time.Since(start)
+	durationMultiThreaded := time.Since(startTimeMultiThreaded)
 
-	// Выводим результаты
-	t.Logf("Однопоточный вариант занял: %v", oneThreadDuration)
-	t.Logf("Параллельный вариант занял: %v", parallelDuration)
+	t.Logf("Однопоточный вариант занял: %v", durationSingleThreaded)
+	t.Logf("Многопоточный вариант занял: %v", durationMultiThreaded)
 
-	// Проверяем, что параллельный вариант быстрее
-	if parallelDuration >= oneThreadDuration {
-		t.Errorf("Параллельный вариант не быстрее однопоточного. Однопоточный: %v, Параллельный: %v", oneThreadDuration, parallelDuration)
+	if durationMultiThreaded >= durationSingleThreaded {
+		t.Errorf("Параллельный вариант не быстрее однопоточного. Однопоточный: %v, Параллельный: %v", durationSingleThreaded, durationMultiThreaded)
 	}
 }

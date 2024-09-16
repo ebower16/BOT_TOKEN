@@ -4,75 +4,64 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
+	"strings"
 	"sync"
-	"time"
 
-	"botus/internal/domain"
 	"database/sql"
 )
 
 type HashService struct {
-	db     *sql.DB
-	mu     sync.Mutex
-	hashes map[string]domain.Hash
+	db *sql.DB
+	mu sync.Mutex
 }
 
 func NewHashService(db *sql.DB) *HashService {
 	return &HashService{
-		db:     db,
-		hashes: make(map[string]domain.Hash),
+		db: db,
 	}
 }
 
-// AddHash добавляет хеш в память.
-func (s *HashService) AddHash(input string) string {
+// Проверка, что строка состоит только из английских букв.
+func isEnglish(input string) bool {
+	for _, char := range input {
+		if !(char >= 'a' && char <= 'z') && !(char >= 'A' && char <= 'Z') {
+			return false
+		}
+	}
+	return true
+}
+
+func (s *HashService) AddHash(input string) (string, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	hash := s.GenerateMD5(input)
-	s.hashes[hash] = domain.Hash{
-		ID:          len(s.hashes) + 1, // Пример ID, можно использовать автоинкремент в базе данных
-		Time:        time.Now(),
-		Description: input,
+	if !isEnglish(input) { // Проверяем, что входные данные состоят только из английских букв.
+		return "", fmt.Errorf("входные данные должны содержать только английские буквы")
 	}
 
-	return hash
+	hash := s.GenerateMD5(input)
+
+	if _, err := s.db.Exec("INSERT INTO hashes (hash, description) VALUES ($1, $2)", hash, input); err != nil {
+		return "", fmt.Errorf("ошибка добавления хеша в базу данных: %v", err)
+	}
+
+	return hash, nil
 }
 
-// FindValueByHash ищет значение по хешу.
 func (s *HashService) FindValueByHash(hash string) (string, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	if value, exists := s.hashes[hash]; exists {
-		return value.Description, nil
+	var description string
+	err := s.db.QueryRow("SELECT description FROM hashes WHERE hash = $1", hash).Scan(&description)
+	if err != nil {
+		return "", fmt.Errorf("ошибка поиска значения по хешу в базе данных: %v", err)
 	}
-	return "", fmt.Errorf("значение не найдено для данного хеша")
+
+	return description, nil
 }
 
-// GenerateMD5 генерирует MD5-хеш для строки.
 func (s *HashService) GenerateMD5(input string) string {
-	hash := md5.Sum([]byte(input))
+	hash := md5.Sum([]byte(strings.ToLower(input)))
 	return hex.EncodeToString(hash[:])
-}
-
-// GenerateMD5Parallel генерирует MD5-хеши для нескольких строк параллельно.
-func (s *HashService) GenerateMD5Parallel(inputs []string) []string {
-	var wg sync.WaitGroup
-	hashes := make([]string, len(inputs))
-	mu := sync.Mutex{}
-
-	for i, input := range inputs {
-		wg.Add(1)
-		go func(i int, input string) {
-			defer wg.Done()
-			hash := s.GenerateMD5(input)
-			mu.Lock()
-			hashes[i] = hash
-			mu.Unlock()
-		}(i, input)
-	}
-
-	wg.Wait()
-	return hashes
 }
