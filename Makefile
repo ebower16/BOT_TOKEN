@@ -1,9 +1,8 @@
-# Определяем переменные
+
 APP_NAME=botus
 DOCKER_IMAGE=$(APP_NAME):latest
 DOCKER_COMPOSE_FILE=docker-compose.yml
 
-# Команды
 .PHONY: all build run test docker up down clean
 
 all: build
