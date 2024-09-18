@@ -30,7 +30,7 @@ func (b *Bot) Start() {
 
 	for update := range updates {
 		if update.Message == nil || !isEnglish(update.Message.Text) {
-			continue // Ignore invalid messages.
+			continue
 		}
 
 		b.mu.Lock()
@@ -77,7 +77,7 @@ func isEnglish(input string) bool {
 	return true
 }
 
- вfunc isHexadecimal(input string) bool {
+func isHexadecimal(input string) bool {
 	for _, char := range input {
 		if !((char >= '0' && char <= '9') || (char >= 'a' && char <= 'f') || (char >= 'A' && char <= 'F')) {
 			return false

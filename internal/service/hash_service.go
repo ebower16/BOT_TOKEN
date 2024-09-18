@@ -24,28 +24,19 @@ func NewHashService(db *sql.DB, maxRequests int) *HashService {
 func InitializeDatabase(db *sql.DB) {
 	query := `
 	CREATE TABLE IF NOT EXISTS hashes (
-		hash TEXT PRIMARY KEY,
-		description TEXT NOT NULL
-	);
+	    hash TEXT PRIMARY KEY,
+	    description TEXT NOT NULL
+	    );
 	CREATE TABLE IF NOT EXISTS request_limits (
-		user_id INTEGER NOT NULL,
-		request_count INTEGER NOT NULL,
-		last_request_time TIMESTAMP NOT NULL,
-		PRIMARY KEY (user_id)
-	);
-	`
+	    user_id INTEGER NOT NULL,
+	    request_count INTEGER NOT NULL,
+	    last_request_time TIMESTAMP NOT NULL,
+	    PRIMARY KEY (user_id)
+	    );
+`
 	if _, err := db.Exec(query); err != nil {
 		panic(fmt.Sprintf("Error initializing database: %v", err))
 	}
-}
-
-func isEnglish(input string) bool {
-	for _, char := range input {
-		if !(char >= 'a' && char <= 'z') && !(char >= 'A' && char <= 'Z') {
-			return false
-		}
-	}
-	return true
 }
 
 func (s *HashService) AddHash(input string) (string, error) {
@@ -105,7 +96,7 @@ func (s *HashService) IncrementRequestCount(userID int64) error {
 
 	count++
 
-	if count > s.N {
+	if count > s.N { // N is the maximum allowed requests per hour
 		return fmt.Errorf("request limit exceeded")
 	}
 
@@ -119,4 +110,13 @@ func (s *HashService) IncrementRequestCount(userID int64) error {
 func (s *HashService) GenerateMD5(input string) string {
 	hash := md5.Sum([]byte(strings.ToLower(input)))
 	return hex.EncodeToString(hash[:])
+}
+
+func isEnglish(input string) bool {
+	for _, char := range input {
+		if !(char >= 'a' && char <= 'z') && !(char >= 'A' && char <= 'Z') {
+			return false
+		}
+	}
+	return true
 }

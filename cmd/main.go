@@ -11,7 +11,7 @@ import (
 	_ "github.com/lib/pq"
 )
 
-const maxRequestsPerHour = 100 // Set your limit here
+const maxRequestsPerHour = 100
 
 func main() {
 
