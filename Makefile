@@ -3,7 +3,10 @@ APP_NAME=botus
 DOCKER_IMAGE=$(APP_NAME):latest
 DOCKER_COMPOSE_FILE=docker-compose.yml
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> 2a415f22daf3b882084bda1ada75cd95146b2efd
 .PHONY: all build run test docker up down clean
 
 all: build
