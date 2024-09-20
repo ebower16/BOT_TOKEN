@@ -1,37 +1,18 @@
 package main
 
 import (
-	"database/sql"
+	"github.com/yourusername/botus/internal/app"
+	"github.com/yourusername/botus/internal/config"
 	"log"
-
-	"botus/internal/app"
-	"botus/internal/config"
-	"botus/internal/service"
-
-	_ "github.com/lib/pq"
 )
 
-const maxRequestsPerHour = 100
-
 func main() {
-
 	configData, err := config.Load()
 	if err != nil {
 		log.Fatalf("Error loading configuration: %v", err)
 	}
 
-	db, err := sql.Open("postgres", configData.DBConnectionString)
-	if err != nil {
-		log.Fatalf("Error connecting to database: %v", err)
-	}
-
-	defer db.Close()
-
-	service.InitializeDatabase(db)
-
-	hashService := service.NewHashService(db, maxRequestsPerHour)
-
-	bot, err := app.NewBot(configData.BotToken, hashService)
+	bot, err := app.NewBot(configData.BotToken)
 	if err != nil {
 		log.Fatalf("Failed to create bot: %v", err)
 	}

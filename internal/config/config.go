@@ -5,26 +5,20 @@ import (
 	"os"
 )
 
+// Config holds the configuration values for the application.
 type Config struct {
-	BotToken           string
-	DBConnectionString string
+	BotToken string // Telegram Bot Token
 }
 
+// Load loads environment variables into Config struct.
 func Load() (*Config, error) {
 	botToken := os.Getenv("BOT_TOKEN")
 	if botToken == "" {
 		log.Println("BOT_TOKEN not set; using default")
-		botToken = "your_default_bot_token_here"
-	}
-
-	dbConnStr := os.Getenv("DB_CONNECTION_STRING")
-	if dbConnStr == "" {
-		log.Println("DB_CONNECTION_STRING not set; using default")
-		dbConnStr = "postgres://user:password@db:5432/mydatabase?sslmode=disable"
+		botToken = "your_default_bot_token_here" // Set your default bot token here if needed
 	}
 
 	return &Config{
-		BotToken:           botToken,
-		DBConnectionString: dbConnStr,
+		BotToken: botToken,
 	}, nil
 }

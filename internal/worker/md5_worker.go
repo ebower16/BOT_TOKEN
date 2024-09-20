@@ -22,13 +22,13 @@ func main() {
 	defer ch.Close()
 
 	q, err := ch.QueueDeclare(
-		"md5_queue", gitit
-	true,
+		"md5_queue",
+		true,
 		false,
 		false,
 		false,
 		nil,
-)
+	)
 	if err != nil {
 		log.Fatalf("Failed to declare a queue: %s", err)
 	}

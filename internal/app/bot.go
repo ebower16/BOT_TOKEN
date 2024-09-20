@@ -1,22 +1,24 @@
 package app
 
 import (
+	"bytes"
 	"fmt"
+	"net/http"
 	"sync"
 
-	"botus/internal/service"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/streadway/amqp"
 )
 
+// Bot represents the Telegram bot application.
 type Bot struct {
-	api         *tgbotapi.BotAPI
-	hashService service.HashServiceInterface
-	mu          sync.Mutex
-	rabbitConn  *amqp.Connection
+	api        *tgbotapi.BotAPI
+	mu         sync.Mutex
+	rabbitConn *amqp.Connection
 }
 
-func NewBot(botToken string, hashService service.HashServiceInterface) (*Bot, error) {
+// NewBot creates a new instance of Bot.
+func NewBot(botToken string) (*Bot, error) {
 	api, err := tgbotapi.NewBotAPI(botToken)
 	if err != nil {
 		return nil, err
@@ -27,9 +29,10 @@ func NewBot(botToken string, hashService service.HashServiceInterface) (*Bot, er
 		return nil, fmt.Errorf("failed to connect to RabbitMQ: %w", err)
 	}
 
-	return &Bot{api: api, hashService: hashService, rabbitConn: rabbitConn}, nil
+	return &Bot{api: api, rabbitConn: rabbitConn}, nil
 }
 
+// Start begins listening for updates from Telegram.
 func (b *Bot) Start() {
 	u := tgbotapi.NewUpdate(0)
 	u.Timeout = 60
@@ -38,7 +41,7 @@ func (b *Bot) Start() {
 
 	for update := range updates {
 		if update.Message == nil || !isEnglish(update.Message.Text) {
-			continue
+			continue // Ignore invalid messages.
 		}
 
 		b.mu.Lock()
@@ -52,26 +55,17 @@ func (b *Bot) Start() {
 	}
 }
 
+// processMessage processes incoming messages from users.
 func (b *Bot) processMessage(message *tgbotapi.Message) error {
-	if err := b.hashService.IncrementRequestCount(message.From.ID); err != nil {
-		return err
-	}
-
 	if len(message.Text) == 32 && isHexadecimal(message.Text) {
-		value, err := b.hashService.FindValueByHash(message.Text)
-		if err != nil {
-			return fmt.Errorf("failed to find value by hash: %w", err)
-		}
-		responseMsg := fmt.Sprintf("Value for hash '%s': %s", message.Text, value)
-		b.api.Send(tgbotapi.NewMessage(message.Chat.ID, responseMsg))
+		// Logic for handling MD5 hash requests can be added here.
+		return nil // Placeholder for actual logic.
 	} else {
-
 		return b.sendToRabbitMQ(message.Text)
 	}
-
-	return nil
 }
 
+// sendToRabbitMQ sends a message to the RabbitMQ queue for processing.
 func (b *Bot) sendToRabbitMQ(text string) error {
 	ch, err := b.rabbitConn.Channel()
 	if err != nil {
@@ -93,8 +87,8 @@ func (b *Bot) sendToRabbitMQ(text string) error {
 
 	body := []byte(text)
 	err = ch.Publish(
-		"",
-		q.Name,
+		"",     // exchange
+		q.Name, // routing key (queue name)
 		false,
 		false,
 		amqp.Publishing{
@@ -105,9 +99,21 @@ func (b *Bot) sendToRabbitMQ(text string) error {
 		return fmt.Errorf("failed to publish a message: %w", err)
 	}
 
+	return b.logStatistics(text) // Log statistics after sending to RabbitMQ.
+}
+
+// logStatistics logs request statistics to the statistics service.
+func (b *Bot) logStatistics(request string) error {
+	data := []byte(fmt.Sprintf(`{"request": "%s"}`, request))
+	resp, err := http.Post("http://localhost:8080/stats", "application/json", bytes.NewBuffer(data))
+	if err != nil {
+		return fmt.Errorf("Error logging statistics: %v", err)
+	}
+	defer resp.Body.Close()
 	return nil
 }
 
+// isEnglish checks if the input string consists only of English letters.
 func isEnglish(input string) bool {
 	for _, char := range input {
 		if !(char >= 'a' && char <= 'z') && !(char >= 'A' && char <= 'Z') {
@@ -117,11 +123,12 @@ func isEnglish(input string) bool {
 	return true
 }
 
+// isHexadecimal checks if the input is a valid hexadecimal format.
 func isHexadecimal(input string) bool {
 	for _, char := range input {
 		if !((char >= '0' && char <= '9') || (char >= 'a' && char <= 'f') || (char >= 'A' && char <= 'F')) {
 			return false
 		}
 	}
-	return len(input) == 32
+	return len(input) == 32 // Ensure length is 32 characters for MD5.
 }
