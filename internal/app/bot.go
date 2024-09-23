@@ -55,7 +55,7 @@ func (b *Bot) Start() {
 	}
 }
 
-// processMessage processes incoming messages from users.
+
 func (b *Bot) processMessage(message *tgbotapi.Message) error {
 	if len(message.Text) == 32 && isHexadecimal(message.Text) {
 		// Logic for handling MD5 hash requests can be added here.
@@ -65,7 +65,7 @@ func (b *Bot) processMessage(message *tgbotapi.Message) error {
 	}
 }
 
-// sendToRabbitMQ sends a message to the RabbitMQ queue for processing.
+
 func (b *Bot) sendToRabbitMQ(text string) error {
 	ch, err := b.rabbitConn.Channel()
 	if err != nil {
@@ -102,7 +102,7 @@ func (b *Bot) sendToRabbitMQ(text string) error {
 	return b.logStatistics(text) // Log statistics after sending to RabbitMQ.
 }
 
-// logStatistics logs request statistics to the statistics service.
+
 func (b *Bot) logStatistics(request string) error {
 	data := []byte(fmt.Sprintf(`{"request": "%s"}`, request))
 	resp, err := http.Post("http://localhost:8080/stats", "application/json", bytes.NewBuffer(data))
@@ -113,7 +113,7 @@ func (b *Bot) logStatistics(request string) error {
 	return nil
 }
 
-// isEnglish checks if the input string consists only of English letters.
+
 func isEnglish(input string) bool {
 	for _, char := range input {
 		if !(char >= 'a' && char <= 'z') && !(char >= 'A' && char <= 'Z') {
@@ -123,7 +123,7 @@ func isEnglish(input string) bool {
 	return true
 }
 
-// isHexadecimal checks if the input is a valid hexadecimal format.
+
 func isHexadecimal(input string) bool {
 	for _, char := range input {
 		if !((char >= '0' && char <= '9') || (char >= 'a' && char <= 'f') || (char >= 'A' && char <= 'F')) {
