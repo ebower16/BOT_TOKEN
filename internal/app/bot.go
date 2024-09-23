@@ -10,14 +10,14 @@ import (
 	"github.com/streadway/amqp"
 )
 
-// Bot represents the Telegram bot application.
+
 type Bot struct {
 	api        *tgbotapi.BotAPI
 	mu         sync.Mutex
 	rabbitConn *amqp.Connection
 }
 
-// NewBot creates a new instance of Bot.
+
 func NewBot(botToken string) (*Bot, error) {
 	api, err := tgbotapi.NewBotAPI(botToken)
 	if err != nil {
@@ -32,7 +32,7 @@ func NewBot(botToken string) (*Bot, error) {
 	return &Bot{api: api, rabbitConn: rabbitConn}, nil
 }
 
-// Start begins listening for updates from Telegram.
+
 func (b *Bot) Start() {
 	u := tgbotapi.NewUpdate(0)
 	u.Timeout = 60
