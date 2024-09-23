@@ -7,7 +7,7 @@ import (
 
 
 type Config struct {
-	BotToken string // Telegram Bot Token
+	BotToken string 
 }
 
 func Load() (*Config, error) {
