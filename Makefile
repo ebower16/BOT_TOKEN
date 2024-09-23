@@ -1,48 +1,36 @@
-
 APP_NAME=botus
 DOCKER_IMAGE=$(APP_NAME):latest
 DOCKER_COMPOSE_FILE=docker-compose.yml
 
-<<<<<<< HEAD
-
-=======
->>>>>>> 2a415f22daf3b882084bda1ada75cd95146b2efd
 .PHONY: all build run test docker up down clean
 
 all: build
 
-
 build:
-	@echo
+	@echo "Building the application..."
 	go build -o $(APP_NAME) ./cmd
 
-
 run: build
-	@echo
+	@echo "Running the application..."
 	./$(APP_NAME)
 
-
 test:
-	@echo
+	@echo "Running tests..."
 	go test ./...
 
-
 docker:
-	@echo
+	@echo "Building Docker image..."
 	docker build -t $(DOCKER_IMAGE) .
 
-
 up:
-	@echo
+	@echo "Starting Docker containers..."
 	docker-compose -f $(DOCKER_COMPOSE_FILE) up --build
 
-
 down:
-	@echo
+	@echo "Stopping Docker containers..."
 	docker-compose -f $(DOCKER_COMPOSE_FILE) down
 
-
 clean:
-	@echo
+	@echo "Cleaning up..."
 	rm -f $(APP_NAME)
 	docker rmi $(DOCKER_IMAGE) || true
