@@ -1,28 +1,16 @@
+FROM golang:1.20 AS builder
 
-FROM golang:1.20 AS builder  
+WORKDIR /app
 
+COPY go.mod go.sum ./
+RUN go mod download
 
-WORKDIR /app  
+COPY . .
 
+RUN go build -o botus ./cmd
 
-COPY go.mod go.sum ./  
+FROM alpine:latest
 
+COPY --from=builder /app/botus .
 
-RUN go mod download  
-
-
-COPY . .  
-
-
-RUN CGO_ENABLED=0 GOOS=linux go build -o botus ./cmd/main.go  
-
-
-FROM alpine:latest  
-
-
-RUN apk --no-cache add ca-certificates  
-
-
-COPY --from=builder /app/botus /botus  
-
-ENTRYPOINT ["/botus"]  
+ENTRYPOINT ["./botus"]
