@@ -5,12 +5,11 @@ import (
 	"os"
 )
 
-// Config holds the configuration values for the application.
+
 type Config struct {
 	BotToken string // Telegram Bot Token
 }
 
-// Load loads environment variables into Config struct.
 func Load() (*Config, error) {
 	botToken := os.Getenv("BOT_TOKEN")
 	if botToken == "" {

@@ -1,26 +1,40 @@
 version: '3.8'
 
 services:
-bot:
-build: .
-ports:
-- "8080:8080"
-environment:
-- BOT_TOKEN=${BOT_TOKEN}
-- DB_CONNECTION_STRING=${DB_CONNECTION_STRING}
-volumes:
-- .:/app
-depends_on:
-- db
+  telegram-bot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      BOT_TOKEN: ${BOT_TOKEN:-your_default_bot_token_here}
+    depends_on:
+      - rabbitmq
+      - statistics-service
 
-db:
-image: postgres:latest
-environment:
-POSTGRES_USER: myuser
-POSTGRES_PASSWORD: mypassword
-POSTGRES_DB: mydb
-volumes:
-- db_data:/var/lib/postgresql/data
+  md5-worker:
+    build:
+      context: ./md5-worker
+      dockerfile: Dockerfile
+    depends_on:
+      - rabbitmq
+
+  statistics-service:
+    build:
+      context: ./statistics-service
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
 
 volumes:
-db_data:
+  db_data:
+  rabbitmq_data:
