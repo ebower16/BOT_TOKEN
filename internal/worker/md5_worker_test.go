@@ -10,7 +10,7 @@ import (
 func TestComputeMD5Performance(t *testing.T) {
 	values := []string{"test1", "test2", "test3", "test4", "test5"}
 
-	// Single-threaded version
+	
 	start := time.Now()
 	singleResults := make(map[string]string)
 
@@ -21,7 +21,7 @@ func TestComputeMD5Performance(t *testing.T) {
 
 	elapsedSingle := time.Since(start)
 
-	// Parallel version
+	
 	start = time.Now()
 	parallelWorker := NewHashWorker()
 	parallelWorker.ComputeMD5(values)
