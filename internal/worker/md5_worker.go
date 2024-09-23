@@ -1,59 +1,39 @@
-package main
+package worker
 
 import (
 	"crypto/md5"
 	"encoding/hex"
-	"log"
-
-	"github.com/streadway/amqp"
+	"sync"
 )
 
-func main() {
-	conn, err := amqp.Dial("amqp://guest:guest@rabbitmq:5672/")
-	if err != nil {
-		log.Fatalf("Failed to connect to RabbitMQ: %s", err)
-	}
-	defer conn.Close()
+type HashWorker struct {
+	results map[string]string
+	mu      sync.Mutex
+}
 
-	ch, err := conn.Channel()
-	if err != nil {
-		log.Fatalf("Failed to open a channel: %s", err)
-	}
-	defer ch.Close()
-
-	q, err := ch.QueueDeclare(
-		"md5_queue",
-		true,
-		false,
-		false,
-		false,
-		nil,
-	)
-	if err != nil {
-		log.Fatalf("Failed to declare a queue: %s", err)
-	}
-
-	msgs, err := ch.Consume(
-		q.Name,
-		"",
-		true,
-		false,
-		false,
-		false,
-		nil,
-	)
-	if err != nil {
-		log.Fatalf("Failed to register a consumer: %s", err)
-	}
-
-	log.Println("Waiting for messages. To exit press CTRL+C")
-	for msg := range msgs {
-		hash := GenerateMD5(msg.Body)
-		log.Printf("Processed message: %s | MD5 Hash: %s\n", msg.Body, hash)
+func NewHashWorker() *HashWorker {
+	return &HashWorker{
+		results: make(map[string]string),
 	}
 }
 
-func GenerateMD5(input []byte) string {
-	hash := md5.Sum(input)
-	return hex.EncodeToString(hash[:])
+func (hw *HashWorker) ComputeMD5(values []string) {
+	var wg sync.WaitGroup
+
+	for _, value := range values {
+		wg.Add(1)
+		go func(val string) {
+			defer wg.Done()
+			hash := md5.Sum([]byte(val))
+			hw.mu.Lock()
+			hw.results[val] = hex.EncodeToString(hash[:])
+			hw.mu.Unlock()
+		}(value)
+	}
+
+	wg.Wait()
+}
+
+func (hw *HashWorker) GetResults() map[string]string {
+	return hw.results
 }
