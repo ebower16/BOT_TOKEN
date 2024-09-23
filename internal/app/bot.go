@@ -41,7 +41,7 @@ func (b *Bot) Start() {
 
 	for update := range updates {
 		if update.Message == nil || !isEnglish(update.Message.Text) {
-			continue // Ignore invalid messages.
+			continue 
 		}
 
 		b.mu.Lock()
@@ -58,7 +58,7 @@ func (b *Bot) Start() {
 
 func (b *Bot) processMessage(message *tgbotapi.Message) error {
 	if len(message.Text) == 32 && isHexadecimal(message.Text) {
-		// Logic for handling MD5 hash requests can be added here.
+		
 		return nil // Placeholder for actual logic.
 	} else {
 		return b.sendToRabbitMQ(message.Text)
@@ -74,7 +74,7 @@ func (b *Bot) sendToRabbitMQ(text string) error {
 	defer ch.Close()
 
 	q, err := ch.QueueDeclare(
-		"md5_queue", // name of the queue
+		"md5_queue", 
 		true,
 		false,
 		false,
@@ -87,8 +87,8 @@ func (b *Bot) sendToRabbitMQ(text string) error {
 
 	body := []byte(text)
 	err = ch.Publish(
-		"",     // exchange
-		q.Name, // routing key (queue name)
+		"",    
+		q.Name, 
 		false,
 		false,
 		amqp.Publishing{
@@ -130,5 +130,5 @@ func isHexadecimal(input string) bool {
 			return false
 		}
 	}
-	return len(input) == 32 // Ensure length is 32 characters for MD5.
+	return len(input) == 32 
 }
